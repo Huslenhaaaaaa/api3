@@ -1,33 +1,34 @@
-from fastapi import FastAPI, HTTPException
 from supabase import create_client, Client
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+from fastapi import FastAPI, HTTPException
 
-# Supabase credentials
-
-supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.io"
+# Replace these with your actual Supabase URL and API key
+supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.co"
 supabase_key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYnF2anlma2lxZGN0dmR2enNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyOTgzMDAsImV4cCI6MjAyNzg3NDMwMH0.zT8tWhhi3xM-7WysTAAW7fUj-iUIMaQHvjnO13eXgCE"
-supabase_secret: str = "bJGFKOycOxcdGW+8jJYgTw0kqpoUzD/NJaurzpO3X/TXZSj2DAuP6VSVqV7ff+ZKvBYtMLWRRSjxL1HLRQyouQ=="
 
-supabase: Client = create_client(supabase_url, supabase_key, supabase_secret)
+# Create the Supabase client
+supabase: Client = create_client(supabase_url, supabase_key)
 
-class AnimatedMovie(BaseModel):
+class Movie(BaseModel):
+    id: Optional[int] = None
     title: Optional[str] = None
     rating: Optional[float] = None
     votes: Optional[int] = None
     gross: Optional[float] = None
-    genre: Optional[str] = None
+    genre: Optional[List[str]] = None
     metascore: Optional[int] = None
     certificate: Optional[str] = None
     director: Optional[str] = None
     year: Optional[int] = None
     description: Optional[str] = None
     runtime: Optional[int] = None
+    
 
 app = FastAPI()
 
-@app.post("/movies/", response_model=AnimatedMovie)
-def create_movie(movie: AnimatedMovie):
+@app.post("/movies/", response_model=Movie)
+def create_movie(movie: Movie):
     data = movie.dict(exclude_unset=True)
     inserted_data = supabase.table("movies").insert(data).execute()
     if inserted_data.data:
@@ -35,45 +36,28 @@ def create_movie(movie: AnimatedMovie):
     else:
         raise HTTPException(status_code=400, detail="Error inserting data")
 
-@app.get("/movies/", response_model=List[AnimatedMovie])
+@app.get("/movies/", response_model=List[Movie])
 def read_movies():
     data = supabase.table("movies").select("*").execute()
     if data.data:
         return data.data
     else:
         raise HTTPException(status_code=400, detail="Error reading data")
+    
 
-@app.get("/movies/search/{search_term}", response_model=List[AnimatedMovie])
-def search_movies(search_term: str):
-    data = supabase.table("movies").select("*").execute()
-    if data.data:
-        return [movie for movie in data.data if search_term.lower() in movie.title.lower()]
+@app.put("/movies/{movie_id}", response_model=Movie)
+def update_movie(movie_id: int, movie: Movie):
+    data = movie.dict(exclude_unset=True)
+    updated_data = supabase.table("movies").update(data).eq("id", movie_id).execute()
+    if updated_data.data:
+        return updated_data.data[0]
     else:
-        raise HTTPException(status_code=400, detail="Error searching data")
+        raise HTTPException(status_code=400, detail="Error updating data")
 
-@app.get("/movies/filter/{genre}", response_model=List[AnimatedMovie])
-def filter_movies(genre: str):
-    data = supabase.table("movies").select("*").execute()
-    if data.data:
-        return [movie for movie in data.data if movie.genre.lower() == genre.lower()]
+@app.delete("/movies/{movie_id}", response_model=List[Movie])
+def delete_movie(movie_id: int):
+    deleted_data = supabase.table("movies").delete().eq("id", movie_id).execute()
+    if deleted_data.data:
+        return deleted_data.data
     else:
-        raise HTTPException(status_code=400, detail="Error filtering data")
-
-@app.get("/movies/sort/{sort_by}/{sort_order}", response_model=List[AnimatedMovie])
-def sort_movies(sort_by: str, sort_order: str):
-    data = supabase.table("movies").select("*").execute()
-    if data.data:
-        if sort_by.lower() == "title":
-            if sort_order.lower() == "asc":
-                return sorted(data.data, key=lambda x: x.title)
-            elif sort_order.lower() == "desc":
-                return sorted(data.data, key=lambda x: x.title, reverse=True)
-        elif sort_by.lower() == "metascore":
-            if sort_order.lower() == "asc":
-                return sorted(data.data, key=lambda x: x.metascore)
-            elif sort_order.lower() == "desc":
-                return sorted(data.data, key=lambda x: x.metascore, reverse=True)
-        else:
-            raise HTTPException(status_code=400, detail="Invalid sort_by or sort_order")
-    else:
-        raise HTTPException(status_code=400, detail="Error sorting data")
+        raise HTTPException(status_code=400, detail="Error deleting data")
