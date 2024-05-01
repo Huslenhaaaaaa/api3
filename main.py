@@ -1,7 +1,6 @@
+import os
+from fastapi import FastAPI
 from supabase import create_client, Client
-from pydantic import BaseModel
-from typing import Optional, List
-from fastapi import FastAPI, HTTPException
 
 # Replace these with your actual Supabase URL and API key
 supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.co"
@@ -61,3 +60,11 @@ def delete_movie(movie_id: int):
         return deleted_data.data
     else:
         raise HTTPException(status_code=400, detail="Error deleting data")
+
+# Get the port from the PORT environment variable or use a default value
+port = int(os.getenv("PORT", 8000))
+
+# Run the FastAPI app
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=port)
