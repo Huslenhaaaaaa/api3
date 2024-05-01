@@ -1,6 +1,8 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel  # Import BaseModel from pydantic
 from supabase import create_client, Client
+from typing import Optional, List
 
 # Replace these with your actual Supabase URL and API key
 supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.co"
