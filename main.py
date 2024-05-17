@@ -1,70 +1,92 @@
 from fastapi import FastAPI, HTTPException
-from supabase import create_client, Client
 from pydantic import BaseModel
-from typing import List, Optional
+from supabase import create_client, Client
 
-supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.io"
-supabase_key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYnF2anlma2lxZGN0dmR2enNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyOTgzMDAsImV4cCI6MjAyNzg3NDMwMH0.zT8tWhhi3xM-7WysTAAW7fUj-iUIMaQHvjnO13eXgCE"
+# Supabase credentials
+url: str = "https://edtyayokddrqlygguwnz.supabase.co"
+key: str = "your_supabase_key_here"
 
-supabase: Client = create_client(supabase_url, supabase_key)
-
-class AnimatedMovie(BaseModel):
-    title: Optional[str] = None
-    rating: Optional[float] = None
-    votes: Optional[int] = None
-    gross: Optional[float] = None
-    genre: Optional[str] = None
-    metascore: Optional[int] = None
-    certificate: Optional[str] = None
-    director: Optional[str] = None
-    year: Optional[int] = None
-    description: Optional[str] = None
-    runtime: Optional[int] = None
+supabase: Client = create_client(url, key)
 
 app = FastAPI()
 
-@app.post("/movies/", response_model=AnimatedMovie)
-def create_movie(movie: AnimatedMovie):
-    data = movie.dict(exclude_unset=True)
-    inserted_data = supabase.table("movies").insert(data).execute()
-    if inserted_data.data:
-        return inserted_data.data[0]
-    else:
-        raise HTTPException(status_code=400, detail="Error inserting data")
+class Health(BaseModel):
+    Id: int
+    Name: str
+    Age: int
+    Gender: str
+    Blood_Type: str
+    Medical_Condition: str
+    Date_of_Admission: str
+    Doctor: str
+    Hospital: str
+    Insurance_Provider: str
+    Billing_Amount: float
+    Room_Number: int
+    Admission_Type: str
+    Discharge_Date: str
+    Medication: str
+    Test_Result: str
 
-@app.get("/movies/", response_model=List[AnimatedMovie])
-def read_movies():
-    data = supabase.table("movies").select("*").execute()
+class HealthUpdate(BaseModel):
+    Age: int
+    Gender: str
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello World"}
+
+@app.get("/health_data/")
+def read_items():
+    data = supabase.table("df").select("*").order("Id", desc=True).limit(100).execute()
     if data.data:
         return data.data
     else:
-        raise HTTPException(status_code=400, detail="Error reading data")
+        raise HTTPException(status_code=404, detail="Health data not found")
 
-@app.get("/movies/search/{search_term}", response_model=List[AnimatedMovie])
-def search_movies(search_term: str):
-    data = supabase.table("movies").select("*").execute()
+@app.put("/health_data/{Id}")
+def update_health(Id: int, update: HealthUpdate):
+    data = supabase.table("df").update(update.dict()).eq("Id", Id).execute()
     if data.data:
-        return [movie for movie in data.data if search_term.lower() in movie['title'].lower()]
+        return data.data
     else:
-        raise HTTPException(status_code=400, detail="Error searching data")
+        raise HTTPException(status_code=404, detail="Health data not found")
 
-@app.get("/movies/filter/{genre}", response_model=List[AnimatedMovie])
-def filter_movies(genre: str):
-    data = supabase.table("movies").select("*").execute()
+@app.get("/highest_billing/")
+def get_highest_billing():
+    data = supabase.table("df").select("*").order("Billing_Amount", desc=True).limit(1).execute()
     if data.data:
-        return [movie for movie in data.data if movie['genre'].lower() == genre.lower()]
+        return data.data
     else:
-        raise HTTPException(status_code=400, detail="Error filtering data")
+        raise HTTPException(status_code=404, detail="Health data not found")
 
-@app.get("/movies/sort/{sort_by}/{sort_order}", response_model=List[AnimatedMovie])
-def sort_movies(sort_by: str, sort_order: str):
-    data = supabase.table("movies").select("*").execute()
+@app.get("/lowest_billing/")
+def get_lowest_billing():
+    data = supabase.table("df").select("*").order("Billing_Amount", asc=True).limit(1).execute()
     if data.data:
-        if sort_by.lower() == "title":
-            return sorted(data.data, key=lambda x: x['title'], reverse=sort_order.lower() == "desc")
-        elif sort_by.lower() == "metascore":
-            return sorted(data.data, key=lambda x: x['metascore'], reverse=sort_order.lower() == "desc")
-        else:
-            raise HTTPException(status_code=400, detail="Invalid sort_by or sort_order")
+        return data.data
     else:
-        raise HTTPException(status_code=400, detail="Error sorting data")
+        raise HTTPException(status_code=404, detail="Health data not found")
+
+@app.get("/blood_type_counts/")
+def get_blood_type_counts():
+    data = supabase.table("df").select("*").execute()
+    if data.data:
+        blood_type_counts = {}
+        for item in data.data:
+            blood_type = item["Blood_Type"]  # Replace "Blood_Type" with your actual column name
+            if blood_type in blood_type_counts:
+                blood_type_counts[blood_type] += 1
+            else:
+                blood_type_counts[blood_type] = 1
+        return blood_type_counts
+    else:
+        raise HTTPException(status_code=404, detail="Health data not found")
+
+@app.delete("/health_data/{Id}")
+def delete_item(Id: int):
+    data = supabase.table("df").delete().eq("Id", Id).execute()
+    if data.data:
+        return {"message": "Health data deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Health data not found")
