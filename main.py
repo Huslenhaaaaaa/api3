@@ -49,7 +49,8 @@ def read_movies():
 def search_movies(search_term: str):
     data = supabase.table("movies").select("*").execute()
     if data.data:
-        return [movie for movie in data.data if search_term.lower() in movie["title"].lower()]
+        # Filtering movies by search term in title
+        return [movie for movie in data.data if movie.get("title", "").lower().find(search_term.lower()) != -1]
     else:
         raise HTTPException(status_code=400, detail="Error searching data")
 
@@ -57,7 +58,8 @@ def search_movies(search_term: str):
 def filter_movies(genre: str):
     data = supabase.table("movies").select("*").execute()
     if data.data:
-        return [movie for movie in data.data if movie["genre"].lower() == genre.lower()]
+        # Filtering movies by genre
+        return [movie for movie in data.data if movie.get("genre", "").lower() == genre.lower()]
     else:
         raise HTTPException(status_code=400, detail="Error filtering data")
 
@@ -65,17 +67,12 @@ def filter_movies(genre: str):
 def sort_movies(sort_by: str, sort_order: str):
     data = supabase.table("movies").select("*").execute()
     if data.data:
-        if sort_by.lower() == "title":
-            if sort_order.lower() == "asc":
-                return sorted(data.data, key=lambda x: x["title"])
-            elif sort_order.lower() == "desc":
-                return sorted(data.data, key=lambda x: x["title"], reverse=True)
-        elif sort_by.lower() == "metascore":
-            if sort_order.lower() == "asc":
-                return sorted(data.data, key=lambda x: x["metascore"])
-            elif sort_order.lower() == "desc":
-                return sorted(data.data, key=lambda x: x["metascore"], reverse=True)
+        # Sorting movies based on sort_by and sort_order
+        if sort_order.lower() == "asc":
+            return sorted(data.data, key=lambda x: x.get(sort_by, ""), reverse=False)
+        elif sort_order.lower() == "desc":
+            return sorted(data.data, key=lambda x: x.get(sort_by, ""), reverse=True)
         else:
-            raise HTTPException(status_code=400, detail="Invalid sort_by or sort_order")
+            raise HTTPException(status_code=400, detail="Invalid sort_order")
     else:
         raise HTTPException(status_code=400, detail="Error sorting data")
