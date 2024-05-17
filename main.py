@@ -4,7 +4,7 @@ from supabase import create_client, Client
 from typing import List, Optional
 
 # Supabase credentials
-supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.io"
+supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.co"
 supabase_key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYnF2anlma2lxZGN0dmR2enNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyOTgzMDAsImV4cCI6MjAyNzg3NDMwMH0.zT8tWhhi3xM-7WysTAAW7fUj-iUIMaQHvjnO13eXgCE"
 
 supabase: Client = create_client(supabase_url, supabase_key)
