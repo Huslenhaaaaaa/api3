@@ -3,12 +3,13 @@ from supabase import create_client, Client
 from pydantic import BaseModel
 from typing import List, Optional
 
-# Supabase credentials
 supabase_url: str = "https://ufbqvjyfkiqdctvdvzsr.supabase.io"
-supabase_key: str = "your_supabase_key_here"
-supabase_secret: str = "your_supabase_secret_here"
+supabase_key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYnF2anlma2lxZGN0dmR2enNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyOTgzMDAsImV4cCI6MjAyNzg3NDMwMH0.zT8tWhhi3xM-7WysTAAW7fUj-iUIMaQHvjnO13eXgCE"
+supabase_secret: str = "bJGFKOycOxcdGW+8jJYgTw0kqpoUzD/NJaurzpO3X/TXZSj2DAuP6VSVqV7ff+ZKvBYtMLWRRSjxL1HLRQyouQ=="
 
-supabase: Client = create_client(supabase_url, supabase_key)
+supabase: Client = create_client(supabase_url, supabase_key, supabase_secret)
+
+
 
 class AnimatedMovie(BaseModel):
     title: Optional[str] = None
